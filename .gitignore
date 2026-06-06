@@ -21,6 +21,21 @@
 !experiments/image_calibration/*.jsonl
 !experiments/image_calibration/prompts/
 !experiments/image_calibration/prompts/*.txt
+!experiments/baseline_sweep/
+!experiments/baseline_sweep/README.md
+!experiments/baseline_sweep/configs/
+!experiments/baseline_sweep/configs/**/
+!experiments/baseline_sweep/configs/**/*.yaml
+!experiments/baseline_sweep/configs/**/*.yml
+!experiments/baseline_sweep/prompt/
+!experiments/baseline_sweep/prompt/**/
+!experiments/baseline_sweep/prompt/**/*.txt
+!experiments/baseline_sweep/scripts/
+!experiments/baseline_sweep/scripts/**/
+!experiments/baseline_sweep/scripts/*.sh
+!experiments/baseline_sweep/src/
+!experiments/baseline_sweep/src/**/
+!experiments/baseline_sweep/src/**/*.py
 
 !papers/
 !papers/*.md
@@ -33,6 +48,9 @@
 # Explicit non-goals for this root repo.
 plan.md
 reports/
+!experiments/baseline_sweep/src/reports/
+!experiments/baseline_sweep/src/reports/**/
+!experiments/baseline_sweep/src/reports/**/*.py
 outputs/
 FastVideo/
 evaluations/

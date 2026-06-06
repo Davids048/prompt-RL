@@ -1,8 +1,30 @@
 # Experiment Handoff
 
-Last updated: 2026-06-05
+Last updated: 2026-06-06
 
 This file is the fast-start handoff for the image-calibration experiments in this workspace. Treat it as a current-state map, not as a full lab notebook. The deeper record remains in `image_calibration.md`, `evaluations.md`, and the run directories under `outputs/image_calibration/`.
+
+## Baseline Sweep Restart
+
+The new composable experiment suite lives under:
+
+```text
+experiments/baseline_sweep/
+```
+
+Its planning contract is in:
+
+```text
+plan.md
+```
+
+The initial smoke run completed successfully at:
+
+```text
+outputs/baseline_sweep/image_geneval_smoke_v1
+```
+
+Run shape: GenEval balanced subset, `none` versus `Qwen/Qwen2.5-VL-3B-Instruct`, `stabilityai/stable-diffusion-3.5-medium` through FastVideo, one sample per prompt, paired seeds across enhancer settings. The run wrote 12 successful records, 12 artifacts, no failed records, and GenEval raw outputs for both trials. Summary: no-enhancer `geneval_reward=0.5000`; Qwen2.5-VL `geneval_reward=0.6667`; both have `geneval_score=0.7500` and `geneval_strict_reward=0.5000`.
 
 ## Current Mental Model
 

@@ -1,0 +1,2 @@
+Please provide an enhanced prompt for the following image generation prompt to make the image more realistic, detailed, with clear separation and precise alignment of all entities.
+Original prompt: {prompt}. Directly provide the improved prompt in <answer> </answer> tags.
