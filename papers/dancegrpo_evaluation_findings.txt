@@ -1,0 +1,54 @@
+DanceGRPO Evaluation Findings: Tasks, Metrics, Models, and Prompt Sources
+=========================================================================
+
+Source checked: arXiv HTML v3 for paper 2505.07818, "DanceGRPO: Unleashing GRPO on Visual Generation"
+
+Main aligned table
+
++================================================+====================+================================================+========================================+============================================================+==================================+
+| Task + metric / benchmark used                 | Type               | One-line task summary                          | Models used in the paper               | Prompt source / handling                                   | Prompt optimization?             |
++================================================+====================+================================================+========================================+============================================================+==================================+
+| Text-to-Image Generation: HPS-v2.1, CLIP       | Image generation   | Generate images from text prompts and evaluate | Stable Diffusion v1.4; FLUX.1-dev /    | Training / optimization uses a curated prompt dataset      | Not mentioned as prompt          |
+| Score, Pick-a-Pic, GenEval                     |                    | human-preference / aesthetics, text-image      | FLUX; HunyuanVideo-T2I, made by using  | balancing diversity and complexity. Evaluation uses 1,000  | optimization. They optimize the  |
+|                                                |                    | alignment, preference score, and               | one latent frame in HunyuanVideo.      | test prompts for CLIP Score and Pick-a-Pic, and official   | generation models with reward    |
+|                                                |                    | object-focused compositional alignment.        |                                        | prompts for GenEval and HPS-v2.1. Paper also says they     | signals, not prompts.            |
+|                                                |                    |                                                |                                        | always use more than 10,000 prompts to optimize the        |                                  |
+|                                                |                    |                                                |                                        | models.                                                    |                                  |
++------------------------------------------------+--------------------+------------------------------------------------+----------------------------------------+------------------------------------------------------------+----------------------------------+
+| Text-to-Video Generation: VideoAlign VQ, MQ,   | Video generation   | Generate videos from text prompts and evaluate | HunyuanVideo.                          | Prompts curated from VidProM. They filter an additional    | Not mentioned. They              |
+| TA; also VisionReward-Video reported in Table  |                    | video visual quality, motion quality, and      |                                        | 1,000 test prompts to evaluate VideoAlign scores.          | curate/filter prompts but do not |
+| 5                                              |                    | text-video alignment. In final analysis, they  |                                        |                                                            | describe prompt rewriting,       |
+|                                                |                    | focus on visual and motion quality.            |                                        |                                                            | prompt enhancement, or learned   |
+|                                                |                    |                                                |                                        |                                                            | prompt optimization.             |
++------------------------------------------------+--------------------+------------------------------------------------+----------------------------------------+------------------------------------------------------------+----------------------------------+
+| Image-to-Video Generation: VideoAlign Motion   | Video generation   | Generate a video conditioned on an input       | SkyReels-I2V as the foundation model.  | Prompt dataset constructed via VidProM and paired with     | Not mentioned. The paper         |
+| Quality                                        |                    | image. They mainly optimize/evaluate motion    | Reference images are synthesized by    | reference images synthesized by HunyuanVideo-T2I. They     | describes prompt dataset         |
+|                                                |                    | quality because the input image constrains     | HunyuanVideo-T2I.                      | filter another 1,000 test prompts to evaluate VideoAlign   | construction/filtering and       |
+|                                                |                    | fidelity and text-video alignment.             |                                        | score.                                                     | reference-image synthesis, not   |
+|                                                |                    |                                                |                                        |                                                            | prompt optimization.             |
++------------------------------------------------+--------------------+------------------------------------------------+----------------------------------------+------------------------------------------------------------+----------------------------------+
+| Human Evaluation: human preference comparison  | Image + video      | Human artists compare baseline outputs against | FLUX for T2I; HunyuanVideo for T2V;    | In-house prompts and reference images. The paper says 240  | Not mentioned.                   |
+|                                                | generation         | RLHF-refined outputs for T2I, T2V, and I2V.    | SkyReels-I2V for I2V.                  | prompts for T2I, 200 prompts for T2V, and 200 prompts      |                                  |
+|                                                |                    |                                                |                                        | paired with reference images for I2V.                      |                                  |
++------------------------------------------------+--------------------+------------------------------------------------+----------------------------------------+------------------------------------------------------------+----------------------------------+
+
+Nuances recorded
+----------------
+1. Text-to-video nuance: The paper says VideoAlign evaluates visual aesthetics quality, motion quality, and text-video
+alignment. However, it also says the text-video alignment dimension was unstable and was excluded from the final
+analysis. Table 5 still reports TA and VisionReward-Video alongside VQ and MQ.
+
+2. Image-to-video nuance: The paper says I2V models exclusively allow optimization of motion quality because visual
+fidelity and text-video alignment are constrained by the input image rather than the model parameter space.
+
+3. Prompt optimization nuance: I did not find prompt rewriting, prompt enhancement, or learned prompt optimization. The
+paper discusses using prompt datasets to optimize the models, not optimizing prompts themselves.
+
+4. T2I prompt source nuance: The paper says the T2I optimization prompt set is curated to balance diversity and
+complexity, but it does not name the source dataset for that curated T2I prompt set.
+
+Source pointers
+---------------
+Paper: https://arxiv.org/abs/2505.07818
+HTML version checked: https://arxiv.org/html/2505.07818v3
+Relevant paper locations checked: Section 3.1 General Setup; Tables 2, 3, 5; Sections 3.2, 3.3, 3.4, 3.5.

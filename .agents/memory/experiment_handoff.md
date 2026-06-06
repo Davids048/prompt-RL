@@ -1,0 +1,230 @@
+# Experiment Handoff
+
+Last updated: 2026-06-05
+
+This file is the fast-start handoff for the image-calibration experiments in this workspace. Treat it as a current-state map, not as a full lab notebook. The deeper record remains in `image_calibration.md`, `evaluations.md`, and the run directories under `outputs/image_calibration/`.
+
+## Current Mental Model
+
+The experiments compare images generated from original benchmark prompts against images generated from rewritten prompts. The rewrite condition is meant to approximate the PromptRL-style prompt enhancement path, then the same original prompt is used for scoring.
+
+```text
++---------------------+
+| benchmark prompts  |
++---------------------+
+          |
+          v
++-----------------------------+
+| prompt ledger               |
+| none + rewrite condition    |
++-----------------------------+
+          |
+          v
++-----------------------------+
+| image generator             |
+| SD3.5 Medium or FLUX.1-dev  |
++-----------------------------+
+          |
+          v
++----------------------------------------------+
+| GenEval / OCR / PickScore / HPS / UR scoring |
++----------------------------------------------+
+          |
+          v
++----------------------------------------------+
+| summaries + row-level HTML comparison        |
++----------------------------------------------+
+```
+
+## Code Locations
+
+```text
+Core pipeline:
+  experiments/image_calibration/calibration_pipeline.py
+
+Main completed SD3.5 runner:
+  experiments/image_calibration/run_promptrl_full_benchmarks.sh
+
+FLUX generator-swap runner:
+  experiments/image_calibration/run_promptrl_full_benchmarks_flux1dev.sh
+
+PromptRL-style rewrite template:
+  experiments/image_calibration/prompts/promptrl_geneval_enhance_user.txt
+
+Row-level HTML table builder:
+  experiments/image_calibration/build_comparison_table.py
+```
+
+The core implementation is in `calibration_pipeline.py`. The runner scripts choose benchmark prompt files, conditions, model ids, generation parameters, and evaluator stages.
+
+## Prompt Rewrite Configuration
+
+The full PromptRL-style SD3.5 run used `Qwen/Qwen2.5-VL-3B-Instruct` as the rewrite LM. It did not use a system prompt. The runner passes `--no-system-prompt`, and the manifest records `prompt_enhancer_system_prompt: null`.
+
+Exact user template:
+
+```text
+Please provide an enhanced prompt for the following image generation prompt to make the image more realistic, detailed, with clear separation and precise alignment of all entities.
+Original prompt: {prompt}. Directly provide the improved prompt in <answer> </answer> tags.
+```
+
+The parser uses the text inside `<answer>...</answer>` as the rewritten prompt. This is intentionally less conservative than the earlier pilot prompt, which asked the LM to preserve every object, count, color, spatial relation, and visible text exactly.
+
+## Experiment Inventory
+
+```text
++--------------------------------------------+----------+---------------------------------------------------------------------+--------------------------------------------------------------------------+
+| Run directory                              | Status   | Purpose                                                             | Notes                                                                    |
++--------------------------------------------+----------+---------------------------------------------------------------------+--------------------------------------------------------------------------+
+| outputs/image_calibration/smoke_sd35       | done     | 1-prompt SD3.5 smoke test, none vs qwen25_vl_3b                     | PickScore/HPS worked; official GenEval deps were missing.                |
+| outputs/image_calibration/pilot_sd35_balanced12 | done | 12 balanced GenEval prompts, SD3.5, conservative rewrite prompt     | Rewriter: Qwen2.5-VL-3B. Produced summary and HTML comparison.           |
+| outputs/image_calibration/pilot_sd35_balanced12_qwen25_3b | done | Same 12-prompt pilot with text-only Qwen2.5-3B rewriter             | Showed weaker metrics than the VL pilot.                                 |
+| outputs/image_calibration/smoke_promptrl_rewrite | done | 1-prompt smoke test for PromptRL-style rewrite template             | Verified rewrite/generate/eval path.                                     |
+| outputs/image_calibration/smoke_promptrl_ocr | done  | 1-prompt OCR smoke test for PromptRL-style rewrite path             | Verified OCR scoring path.                                               |
+| outputs/image_calibration/promptrl_full_sd35_20260528_0439 | done | Main full SD3.5 experiment over GenEval, OCR1k, PickScore-SFW       | This is the main completed result.                                       |
+| outputs/image_calibration/promptrl_full_flux1dev_20260528_235857 | aborted/empty | Early FLUX detached attempt                                         | Not a result run.                                                        |
+| outputs/image_calibration/promptrl_full_flux1dev_20260529_000008 | aborted/debug | Early FLUX probe/debug attempt                                      | Has a manifest but is not a result run.                                  |
+| outputs/image_calibration/promptrl_full_flux1dev_20260529_000245 | partial | Generator-swap attempt: SD3.5 prompt ledgers reused, FLUX.1-dev images | GenEval images completed; OCR/PickScore generation and evals did not.    |
++--------------------------------------------+----------+---------------------------------------------------------------------+--------------------------------------------------------------------------+
+```
+
+## Main Completed Run
+
+Run root:
+
+```text
+outputs/image_calibration/promptrl_full_sd35_20260528_0439
+```
+
+Resolved configuration:
+
+```text
+Generator: stabilityai/stable-diffusion-3.5-medium
+Generation backend: FastVideo SD3.5 path
+Resolution: 1024x1024
+Steps: 20
+Guidance: 6.0
+Conditions: none,qwen25_vl_3b
+Rewriter: Qwen/Qwen2.5-VL-3B-Instruct
+System prompt: none
+Rewrite temperature: 0.7
+Rewrite top-p: 0.9
+Rewrite max new tokens: 256
+```
+
+Important provenance note: `1024x1024`, 20 steps, and guidance 6.0 are experiment-local settings inherited from the pilot/smoke path. They are not official SD3.5 Medium defaults.
+
+Benchmark coverage:
+
+```text
++---------------+------------------+------------------+----------------------------------------------+
+| Benchmark     | Original prompts | Images generated | Prompt source                                 |
++---------------+------------------+------------------+----------------------------------------------+
+| GenEval full  | 553              | 1106             | evaluations/geneval/prompts/evaluation_metadata.jsonl |
+| OCR1k         | 1018             | 2036             | evaluations/flow_grpo/dataset/ocr/test.txt   |
+| PickScore-SFW | 1024             | 2048             | evaluations/flow_grpo/dataset/pickscore_sfw/test.txt |
++---------------+------------------+------------------+----------------------------------------------+
+```
+
+Main artifacts:
+
+```text
+Run manifest:
+  outputs/image_calibration/promptrl_full_sd35_20260528_0439/run_manifest.json
+
+HTML row-level comparison:
+  outputs/image_calibration/promptrl_full_sd35_20260528_0439/comparison_table.html
+
+GenEval:
+  outputs/image_calibration/promptrl_full_sd35_20260528_0439/geneval_full/summary.json
+  outputs/image_calibration/promptrl_full_sd35_20260528_0439/geneval_full/geneval/server_results.jsonl
+
+OCR1k:
+  outputs/image_calibration/promptrl_full_sd35_20260528_0439/ocr1k/summary.json
+  outputs/image_calibration/promptrl_full_sd35_20260528_0439/ocr1k/metrics_preference.jsonl
+
+PickScore-SFW:
+  outputs/image_calibration/promptrl_full_sd35_20260528_0439/pickscore_sfw/summary.json
+  outputs/image_calibration/promptrl_full_sd35_20260528_0439/pickscore_sfw/metrics_preference.jsonl
+```
+
+Main aggregate results:
+
+```text
++---------------+----------------------+------------+------------+------------+
+| Benchmark     | Metric               | none       | qwen25_vl_3b | Delta    |
++---------------+----------------------+------------+------------+------------+
+| GenEval full  | geneval_score        | 0.4625     | 0.5980     | +0.1355    |
+| GenEval full  | geneval_reward       | 0.4467     | 0.6004     | +0.1537    |
+| GenEval full  | geneval_strict_reward| 0.3327     | 0.4828     | +0.1501    |
+| OCR1k         | ocr                  | 0.4447     | 0.5153     | +0.0706    |
+| PickScore-SFW | pickscore            | 21.4588    | 21.5690    | +0.1101    |
+| PickScore-SFW | hps                  | 29.1591    | 29.7003    | +0.5412    |
+| PickScore-SFW | unifiedreward        | 3.4893     | 3.6408     | +0.1515    |
++---------------+----------------------+------------+------------+------------+
+```
+
+The row-level HTML comparison has 5749 rows. It combines GenEval score/reward rows, OCR rows, and PickScore/HPS/UnifiedReward rows.
+
+## Partial FLUX Run
+
+Run root:
+
+```text
+outputs/image_calibration/promptrl_full_flux1dev_20260529_000245
+```
+
+Goal: isolate the generator by reusing byte-identical prompt ledgers from the main SD3.5 run and changing only the generator to `black-forest-labs/FLUX.1-dev`.
+
+Resolved configuration:
+
+```text
+Source run root: outputs/image_calibration/promptrl_full_sd35_20260528_0439
+Prompt ledgers reused from source run: true
+Generator: black-forest-labs/FLUX.1-dev
+Generation backend: diffusers_flux
+Resolution: 1024x1024
+Steps: 20
+Guidance: 6.0
+Conditions: none,qwen25_vl_3b
+```
+
+Current artifact state:
+
+```text
++---------------+------------------+-------------------------+
+| Task          | Expected images  | Current images          |
++---------------+------------------+-------------------------+
+| GenEval full  | 1106             | 1106                    |
+| OCR1k         | 2036             | 0, images dir missing   |
+| PickScore-SFW | 2048             | 0, images dir missing   |
++---------------+------------------+-------------------------+
+```
+
+The FLUX run is not a completed full comparison. It should be treated as a partial generator-swap artifact. It produced all GenEval images and wrote `geneval_full/artifacts.jsonl`, but the OCR/PickScore stages did not run. No final comparison table exists for this run.
+
+## Evaluator Provenance
+
+The GenEval score path uses `evaluations/reward-server` because the Flow-GRPO README points users to `https://github.com/yifan123/reward-server` under its reward preparation instructions for GenEval. The local workspace follows that route instead of relying on the official GenEval legacy dependency stack.
+
+For evaluator repo inventory and local modifications, read:
+
+```text
+.agents/memory/evaluations.md
+```
+
+## Known Caveats
+
+The early 12-prompt pilots are sanity checks only. They are too small to support experimental conclusions.
+
+The PromptRL paper itself did not expose a reusable natural-language system prompt. The PromptRL-style rewrite used here comes from the released code pattern: a user-only prompt asking for a more realistic, detailed prompt with clear entity separation/alignment and `<answer>` tags.
+
+The PromptRL-style rewrite can add semantic risk. It often expands short prompts with scene context and detail. The completed SD3.5 metrics improved across the evaluated aggregates, but row-level inspection in `comparison_table.html` is still necessary before claiming that the rewrite is always semantically faithful.
+
+The FLUX path added local support in `calibration_pipeline.py` through Diffusers `FluxPipeline`. That code should be considered experiment support, not yet a fully validated production path.
+
+## Practical Next Steps
+
+If continuing this work, first decide whether to resume/redo the FLUX run or to analyze the completed SD3.5 run. For a clean FLUX comparison, reuse the SD3.5 prompt ledgers again, complete OCR1k and PickScore-SFW generation/evals, run summaries, and build `comparison_table.html`. Do not rerun prompt rewriting if the goal is a generator-only comparison.
+
+If writing up the SD3.5 experiment, cite the main run manifest, the per-task summaries, and the HTML table. Also explicitly say that 20 steps and guidance 6.0 are local experiment settings, not upstream defaults.

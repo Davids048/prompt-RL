@@ -1,0 +1,242 @@
+diff --git a/gunicorn.conf.py b/gunicorn.conf.py
+index e471cff..55f1684 100644
+--- a/gunicorn.conf.py
++++ b/gunicorn.conf.py
+@@ -1,5 +1,5 @@
+ import os
+-NUM_DEVICES = 8
++NUM_DEVICES = int(os.environ.get("GENEVAL_NUM_DEVICES", "4"))
+ USED_DEVICES = set()
+ 
+ # reward='deqa'
+diff --git a/reward_server/gen_eval.py b/reward_server/gen_eval.py
+index 2cd8693..bdf699a 100644
+--- a/reward_server/gen_eval.py
++++ b/reward_server/gen_eval.py
+@@ -13,6 +13,11 @@ import pandas as pd
+ from collections import defaultdict
+ from PIL import Image, ImageOps
+ import torch
++
++from reward_server.mmcv_compat import ensure_mmcv_legacy_exports
++
++ensure_mmcv_legacy_exports()
++
+ import mmdet
+ from mmdet.apis import inference_detector, init_detector
+ 
+@@ -20,9 +25,9 @@ import open_clip
+ from clip_benchmark.metrics import zeroshot_classification as zsc
+ zsc.tqdm = lambda it, *args, **kwargs: it
+ 
+-DEVICE = "cuda"
+-MY_CONFIG_PATH="your_mmdetection_path/mmdetection/configs/mask2former/mask2former_swin-s-p4-w7-224_lsj_8x2_50e_coco.py"
+-MY_CKPT_PATH="your_reward-server_path/reward-server/model/mask2former2"
++DEVICE = os.environ.get("GENEVAL_DEVICE", "cuda")
++MY_CONFIG_PATH="/home/hal-jundas/codes/UniRL/evaluations/reward-server/mmdetection/configs/mask2former/mask2former_swin-s-p4-w7-224_lsj_8x2_50e_coco.py"
++MY_CKPT_PATH="/home/hal-jundas/codes/UniRL/evaluations/reward-server/model/mask2former2"
+ 
+ def load_geneval():
+     def timed(fn):
+@@ -339,4 +344,4 @@ def load_geneval():
+                     grouped_rewards[tag].append(1.0 if result["correct"] else 0.0)
+         return scores, rewards, strict_rewards, dict(grouped_rewards), dict(grouped_strict_rewards)
+ 
+-    return compute_geneval
+\ No newline at end of file
++    return compute_geneval
+diff --git a/LOCAL_SETUP.md b/LOCAL_SETUP.md
+new file mode 100644
+index 0000000..2473393
+--- /dev/null
++++ b/LOCAL_SETUP.md
+@@ -0,0 +1,48 @@
++# Local GenEval Reward Server Notes
++
++This checkout is used as the dependency-isolated GenEval path for the image calibration pipeline.
++
++Prepared locally:
++
++```text
++Python env: /home/hal-jundas/codes/UniRL/.envs/reward_server
++Mask2Former checkpoint: evaluations/reward-server/model/mask2former2/mask2former_swin-s-p4-w7-224_lsj_8x2_50e_coco.pth
++mmdetection 2.x config tree: evaluations/reward-server/mmdetection
++Server GPU count: 4 in gunicorn.conf.py
++Torch stack: torch==2.11.0+cu129, torchvision==0.26.0+cu129
++MMCV stack: mmcv-full==1.7.2 built locally with CUDA 12.9, sm_100, GCC 13.3
++MMDetection: mmdet==2.28.2 installed editable from the local checkout
++OpenCV: opencv-python-headless==4.11.0.86
++Reusable wheel: /home/hal-jundas/codes/UniRL/.cache/wheels/mmcv_full-1.7.2-cp310-cp310-linux_aarch64.whl
++```
++
++The upstream install command pins `torch==2.1.2+cu121`, but on this ARM node the CUDA 12.1 PyTorch wheel index only exposes torch versions up to `2.0.1`. This local setup therefore uses the newer CUDA 12.9 PyTorch stack already used by the workspace. The working path is a locally built `mmcv-full==1.7.2` wheel for Python 3.10, CUDA 12.9, and `sm_100`; plain `mmcv==2.x` must not be installed in this environment because it shadows the legacy MMCV exports required by `mmdet==2.28.2`.
++
++The local `reward_server/gen_eval.py` paths have been patched to point at the downloaded Mask2Former checkpoint and the local mmdetection config. Import validation passes for `mmcv`, `mmcv.ops`, `mmdet.apis`, and `reward_server.gen_eval`.
++
++If the MMCV stack needs to be repaired, uninstall both possible package names and reinstall from the local wheel:
++
++```bash
++/home/hal-jundas/codes/UniRL/.envs/reward_server/bin/python -m pip uninstall -y mmcv mmcv-full
++/home/hal-jundas/codes/UniRL/.envs/reward_server/bin/python -m pip install --no-deps /home/hal-jundas/codes/UniRL/.cache/wheels/mmcv_full-1.7.2-cp310-cp310-linux_aarch64.whl
++```
++
++`pip check` reports that `mmengine` wants `opencv-python` and that `nvidia-cusparselt-cu12` is unsupported on this platform. This env intentionally uses `opencv-python-headless` because the regular package fails to import on the login node without `libGL.so.1`. The practical check is importing `cv2`, `mmcv`, `mmdet.apis`, and `reward_server.gen_eval`, which currently passes.
++
++Start the server from this directory inside the existing Slurm allocation only:
++
++```bash
++srun --overlap --jobid=4745 bash -lc 'cd /home/hal-jundas/codes/UniRL/evaluations/reward-server; export MPLCONFIGDIR=/tmp/matplotlib-reward-server; export GENEVAL_DEVICE=cuda; export GENEVAL_NUM_DEVICES=1; /home/hal-jundas/codes/UniRL/.envs/reward_server/bin/gunicorn "app_geneval:create_app()"'
++```
++
++Use `GENEVAL_NUM_DEVICES=1` for smoke tests and raise it to `4` only for larger batches after the single-worker path has loaded and scored successfully.
++
++The calibration pipeline can then call:
++
++```bash
++python experiments/image_calibration/calibration_pipeline.py eval-geneval \
++  --run-dir outputs/image_calibration/<run> \
++  --server-url http://127.0.0.1:18085
++```
++
++As of the latest check, `srun --overlap --jobid=4745 nvidia-smi -L` fails with `Unable to contact slurm controller`; no GPU-backed reward server should be started until overlap access works again.
+diff --git a/reward_server/mmcv_compat.py b/reward_server/mmcv_compat.py
+new file mode 100644
+index 0000000..fe26033
+--- /dev/null
++++ b/reward_server/mmcv_compat.py
+@@ -0,0 +1,135 @@
++"""MMCV compatibility exports for reward-server's MMDetection 2.x path.
++
++The reward-server GenEval code uses MMDetection 2.x, which expects several
++MMCV 1.x symbols at ``mmcv`` and ``mmcv.utils`` import locations. The current
++environment uses a locally built ``mmcv-full==1.7.2`` wheel, so this is mostly
++a no-op guard against missing legacy exports if the environment drifts.
++"""
++
++from __future__ import annotations
++
++import importlib
++
++import mmcv
++import mmcv.utils as mmcv_utils
++
++
++LEGACY_EXPORT_MODULES = (
++    "mmcv.utils.config",
++    "mmcv.utils.hub",
++    "mmcv.utils.logging",
++    "mmcv.utils.misc",
++    "mmcv.utils.parrots_wrapper",
++    "mmcv.utils.path",
++    "mmcv.utils.progressbar",
++    "mmcv.utils.registry",
++    "mmcv.utils.seed",
++    "mmcv.utils.timer",
++    "mmcv.utils.version_utils",
++)
++
++PRIVATE_COMPAT_EXPORTS = (
++    "_AdaptiveAvgPoolNd",
++    "_AdaptiveMaxPoolNd",
++    "_AvgPoolNd",
++    "_BatchNorm",
++    "_ConvNd",
++    "_ConvTransposeMixin",
++    "_InstanceNorm",
++    "_MaxPoolNd",
++)
++
++TOP_LEVEL_EXPORTS = (
++    "Config",
++    "ConfigDict",
++    "DictAction",
++    "ProgressBar",
++    "Registry",
++    "build_from_cfg",
++    "check_file_exist",
++    "digit_version",
++    "get_git_hash",
++    "get_logger",
++    "is_list_of",
++    "is_seq_of",
++    "jit",
++    "mkdir_or_exist",
++    "print_log",
++    "scandir",
++    "skip_no_elena",
++    "to_1tuple",
++    "to_2tuple",
++    "to_3tuple",
++    "to_4tuple",
++    "track_iter_progress",
++)
++
++OPTIONAL_DEVICE_FLAGS = (
++    "IS_IPU_AVAILABLE",
++    "IS_XPU_AVAILABLE",
++)
++
++
++def _copy_public_exports(module: object) -> None:
++    for name in dir(module):
++        if name.startswith("_") and name not in PRIVATE_COMPAT_EXPORTS:
++            continue
++        if hasattr(mmcv_utils, name):
++            continue
++        setattr(mmcv_utils, name, getattr(module, name))
++
++
++def ensure_mmcv_legacy_exports() -> None:
++    for module_name in LEGACY_EXPORT_MODULES:
++        module = importlib.import_module(module_name)
++        _copy_public_exports(module)
++
++    if not hasattr(mmcv_utils, "TORCH_VERSION"):
++        import torch
++
++        mmcv_utils.TORCH_VERSION = torch.__version__
++
++    for name in OPTIONAL_DEVICE_FLAGS:
++        if not hasattr(mmcv_utils, name):
++            setattr(mmcv_utils, name, False)
++
++    for name in TOP_LEVEL_EXPORTS:
++        if hasattr(mmcv_utils, name) and not hasattr(mmcv, name):
++            setattr(mmcv, name, getattr(mmcv_utils, name))
++
++    if not hasattr(mmcv, "TORCH_VERSION"):
++        mmcv.TORCH_VERSION = mmcv_utils.TORCH_VERSION
++
++    import mmcv.cnn as mmcv_cnn
++    import mmcv.cnn.bricks.registry as bricks_registry
++    import mmcv.cnn.bricks.transformer as bricks_transformer
++    import mmcv.cnn.utils.weight_init as weight_init
++
++    if not hasattr(mmcv_cnn, "MODELS"):
++        mmcv_cnn.MODELS = mmcv_utils.Registry("models")
++    for name in (
++        "ACTIVATION_LAYERS",
++        "ATTENTION",
++        "CONV_LAYERS",
++        "DROPOUT_LAYERS",
++        "FEEDFORWARD_NETWORK",
++        "NORM_LAYERS",
++        "PADDING_LAYERS",
++        "PLUGIN_LAYERS",
++        "POSITIONAL_ENCODING",
++        "TRANSFORMER_LAYER",
++        "TRANSFORMER_LAYER_SEQUENCE",
++        "UPSAMPLE_LAYERS",
++    ):
++        if hasattr(bricks_registry, name) and not hasattr(mmcv_cnn, name):
++            setattr(mmcv_cnn, name, getattr(bricks_registry, name))
++        if hasattr(bricks_registry, name) and not hasattr(bricks_transformer, name):
++            setattr(bricks_transformer, name, getattr(bricks_registry, name))
++    for name in dir(weight_init):
++        if not name.startswith("_") and not hasattr(mmcv_cnn, name):
++            setattr(mmcv_cnn, name, getattr(weight_init, name))
++
++    exported = set(getattr(mmcv_utils, "__all__", ()))
++    exported.update(name for name in TOP_LEVEL_EXPORTS if hasattr(mmcv_utils, name))
++    exported.add("TORCH_VERSION")
++    mmcv_utils.__all__ = sorted(exported)

@@ -1,0 +1,44 @@
+# Track only the lightweight reproducibility surface for this experiment hub.
+# Everything is ignored by default; opt-ins below are intentional.
+*
+
+!.gitignore
+!AGENTS.md
+!externals.lock.md
+
+!.agents/
+!.agents/AGENTS.md
+!.agents/README.md
+!.agents/memory/
+!.agents/memory/*.md
+
+!experiments/
+!experiments/image_calibration/
+!experiments/image_calibration/README.md
+!experiments/image_calibration/*.py
+!experiments/image_calibration/*.sh
+!experiments/image_calibration/*.json
+!experiments/image_calibration/*.jsonl
+!experiments/image_calibration/prompts/
+!experiments/image_calibration/prompts/*.txt
+
+!papers/
+!papers/*.md
+!papers/*.txt
+
+!patches/
+!patches/reward-server/
+!patches/reward-server/*.patch
+
+# Explicit non-goals for this root repo.
+plan.md
+reports/
+outputs/
+FastVideo/
+evaluations/
+.cache/
+.codex/
+.envs/
+.venv/
+__pycache__/
+*.py[cod]
