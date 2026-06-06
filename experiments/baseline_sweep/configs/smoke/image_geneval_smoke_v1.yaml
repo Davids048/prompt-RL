@@ -14,10 +14,13 @@ enhancers:
 
 generators:
   stabilityai/stable-diffusion-3.5-medium:
-    backend: fastvideo_image
+    backend: fastvideo
     params:
+      workload_type: t2i
       width: 1024
       height: 1024
+      num_frames: 1
+      fps: 1
       steps: 20
       guidance: 6.0
 

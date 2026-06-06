@@ -2,6 +2,7 @@
 
 ## 2026-06-06
 
+- Updated Baseline Sweep FastVideo generation so `workload_type`, `num_frames`, and `fps` come from YAML; artifact extensions now follow image/video workload type, and GenEval trials reject video workloads before generation.
 - Added and launched the new Baseline Sweep suite under `experiments/baseline_sweep/`; the smoke run at `outputs/baseline_sweep/image_geneval_smoke_v1` completed with 12/12 successful GenEval records, paired seeds across `none` and `Qwen/Qwen2.5-VL-3B-Instruct`, and no failed records.
 - Added root versioning policy for the experiment hub: track lightweight code, prompts, memory, research notes, external repository pins, and reward-server patches while ignoring `plan.md`, `reports/`, generated outputs, caches, environments, and nested third-party checkouts.
 

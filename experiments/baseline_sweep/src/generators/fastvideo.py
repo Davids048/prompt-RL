@@ -18,13 +18,14 @@ def generate(
     from fastvideo import VideoGenerator
 
     params = generator.get("params", {})
+    workload_type = str(params.get("workload_type", "t2i")).lower()
     attention_backend = params.get("attention_backend")
     if attention_backend:
         os.environ["FASTVIDEO_ATTENTION_BACKEND"] = str(attention_backend)
 
     init_kwargs = {
         "num_gpus": int(params.get("num_gpus", 1)),
-        "workload_type": "t2i",
+        "workload_type": workload_type,
         "sp_size": 1,
         "tp_size": 1,
         "dit_cpu_offload": bool(params.get("cpu_offload", False)),
@@ -47,13 +48,15 @@ def generate(
             output_path.parent.mkdir(parents=True, exist_ok=True)
             kwargs: dict[str, Any] = {
                 "output_path": str(output_path),
-                "num_frames": 1,
-                "fps": 1,
                 "seed": int(row["seed"]),
                 "save_video": True,
                 "return_frames": False,
                 "negative_prompt": str(params.get("negative_prompt", "")),
             }
+            if "num_frames" in params:
+                kwargs["num_frames"] = int(params["num_frames"])
+            if "fps" in params:
+                kwargs["fps"] = int(params["fps"])
             if "height" in params:
                 kwargs["height"] = int(params["height"])
             if "width" in params:

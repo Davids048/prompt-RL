@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from prompt_sources import geneval as geneval_prompt_source
 from enhancers import hf_vlm, none
-from generators import fastvideo_image
+from generators import fastvideo
 from eval import geneval as geneval_eval
 
 
@@ -17,7 +17,8 @@ ENHANCERS = {
 }
 
 GENERATORS = {
-    "fastvideo_image": fastvideo_image.generate,
+    "fastvideo": fastvideo.generate,
+    "fastvideo_image": fastvideo.generate,
 }
 
 EVALS = {

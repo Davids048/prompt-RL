@@ -44,6 +44,11 @@ def _run_trial_inner(trial: dict[str, Any], run_dir: Path, log_rel_path: str) ->
     enhancer_fn = registry.ENHANCERS[trial["enhancer"]["backend"]]
     generator_fn = registry.GENERATORS[trial["generator"]["backend"]]
 
+    compatibility_error = validate_trial_compatibility(trial)
+    if compatibility_error:
+        append_final_records(run_dir / "records.jsonl", [trial_error_record(trial, "config", compatibility_error, log_rel_path)])
+        return
+
     try:
         prompt_rows = prompt_loader(task)
     except Exception as exc:  # noqa: BLE001
@@ -285,6 +290,7 @@ def build_generation_items(
     generator = trial["generator"]
     enhancer = trial["enhancer"]
     samples_per_prompt = int(task.get("samples_per_prompt", 1))
+    artifact_ext = artifact_extension(generator)
     items: list[dict[str, Any]] = []
     for row in enhanced_rows:
         for sample_idx in range(samples_per_prompt):
@@ -295,7 +301,7 @@ def build_generation_items(
             artifact_path = (
                 Path("artifacts")
                 / trial["trial_id"]
-                / f"{int(row['prompt_index']):06d}_{sample_idx:04d}_{safe_name(task['name'])}.png"
+                / f"{int(row['prompt_index']):06d}_{sample_idx:04d}_{safe_name(task['name'])}{artifact_ext}"
             )
             item = {
                 "trial_id": trial["trial_id"],
@@ -434,6 +440,34 @@ def attach_log_path(rows: list[dict[str, Any]], log_rel_path: str) -> list[dict[
             item["error"] = error
         out.append(item)
     return out
+
+
+def validate_trial_compatibility(trial: dict[str, Any]) -> str | None:
+    task = trial["task"]
+    generator = trial["generator"]
+    workload_type = generator_workload_type(generator)
+    if workload_type not in {"t2i", "i2i", "t2v", "i2v"}:
+        return f"Unsupported FastVideo workload_type={workload_type!r}; expected one of t2i, i2i, t2v, i2v."
+    if "geneval" in task.get("eval", []) and not is_image_workload(workload_type):
+        return f"GenEval requires an image workload, but generator workload_type={workload_type!r}."
+    return None
+
+
+def artifact_extension(generator: dict[str, Any]) -> str:
+    workload_type = generator_workload_type(generator)
+    if is_image_workload(workload_type):
+        return ".png"
+    if workload_type.endswith("2v"):
+        return ".mp4"
+    raise ValueError(f"Unsupported FastVideo workload_type={workload_type!r}.")
+
+
+def generator_workload_type(generator: dict[str, Any]) -> str:
+    return str(generator.get("params", {}).get("workload_type", "t2i")).lower()
+
+
+def is_image_workload(workload_type: str) -> bool:
+    return workload_type.endswith("2i")
 
 
 def append_final_records(path: Path, rows: list[dict[str, Any]]) -> None:
