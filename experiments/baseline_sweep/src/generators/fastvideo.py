@@ -36,6 +36,8 @@ def generate(
         "pin_cpu_memory": False,
         "use_fsdp_inference": False,
     }
+    if "flow_shift" in params:
+        init_kwargs["flow_shift"] = float(params["flow_shift"])
     model = VideoGenerator.from_pretrained(model_path=generator["name"], **init_kwargs)
     results: list[dict[str, Any]] = []
     try:

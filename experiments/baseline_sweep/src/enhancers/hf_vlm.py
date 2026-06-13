@@ -29,17 +29,14 @@ def enhance(
 ) -> list[dict[str, Any]]:
     del trial, run_dir
     import torch
-    from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+    from transformers import AutoProcessor
 
     model_id = enhancer["name"]
     params = enhancer.get("params", {})
     template = Path(enhancer["template"]).read_text(encoding="utf-8")
-    processor = AutoProcessor.from_pretrained(model_id)
-    model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-        model_id,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-    ).eval()
+    trust_remote_code = bool(params.get("trust_remote_code", False))
+    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=trust_remote_code)
+    model = load_model(model_id, params, torch).eval()
 
     rows: list[dict[str, Any]] = []
     try:
@@ -61,13 +58,17 @@ def enhance(
                 inputs = processor(text=[text], padding=True, return_tensors="pt").to(model.device)
                 temperature = float(params.get("temperature", 0.0))
                 do_sample = temperature > 0
+                generation_kwargs: dict[str, Any] = {
+                    "max_new_tokens": int(params.get("max_new_tokens", 256)),
+                    "do_sample": do_sample,
+                }
+                if do_sample:
+                    generation_kwargs["temperature"] = temperature
+                    generation_kwargs["top_p"] = float(params.get("top_p", 1.0))
                 with torch.inference_mode():
                     generated = model.generate(
                         **inputs,
-                        max_new_tokens=int(params.get("max_new_tokens", 256)),
-                        do_sample=do_sample,
-                        temperature=temperature if do_sample else None,
-                        top_p=float(params.get("top_p", 1.0)) if do_sample else None,
+                        **generation_kwargs,
                     )
                 generated = generated[:, inputs.input_ids.shape[1]:]
                 enhanced_prompt = clean_rewrite(processor.batch_decode(generated, skip_special_tokens=True)[0])
@@ -90,3 +91,44 @@ def enhance(
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
     return rows
+
+
+def load_model(model_id: str, params: dict[str, Any], torch: Any) -> Any:
+    from transformers import AutoModelForImageTextToText
+
+    kwargs = {
+        "torch_dtype": torch_dtype(params, torch),
+        "device_map": params.get("device_map", "auto"),
+        "trust_remote_code": bool(params.get("trust_remote_code", False)),
+    }
+    try:
+        return AutoModelForImageTextToText.from_pretrained(model_id, **kwargs)
+    except ValueError:
+        pass
+
+    fallback_names = [
+        "Qwen3VLForConditionalGeneration",
+        "Qwen2_5_VLForConditionalGeneration",
+        "Qwen2VLForConditionalGeneration",
+    ]
+    import transformers
+
+    for class_name in fallback_names:
+        model_class = getattr(transformers, class_name, None)
+        if model_class is None:
+            continue
+        try:
+            return model_class.from_pretrained(model_id, **kwargs)
+        except ValueError:
+            continue
+    raise ValueError(f"No supported HF VLM loader found for enhancer model {model_id!r}.")
+
+
+def torch_dtype(params: dict[str, Any], torch: Any) -> Any:
+    dtype_name = str(params.get("torch_dtype", "bfloat16")).lower()
+    if dtype_name in {"auto", "none"}:
+        return "auto"
+    dtype = getattr(torch, dtype_name, None)
+    if dtype is None:
+        raise ValueError(f"Unsupported torch_dtype={dtype_name!r}.")
+    return dtype

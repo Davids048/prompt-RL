@@ -1,0 +1,3 @@
+Please enhance the following text-to-video generation prompt. Preserve the original user intent, subjects, actions, scene, counts, spatial relations, and any visible text exactly.
+Make the prompt more visually concrete for video generation by adding concise details about temporal motion, camera behavior, scene continuity, lighting, and realistic physical dynamics. Directly provide the improved prompt in <answer> </answer> tags.
+Original prompt: {prompt}

@@ -1,0 +1,92 @@
+run: wan21_13b_vbench6_prompt_enhancer_v2
+output_root: outputs/baseline_sweep
+seed: 430000
+
+enhancers:
+  none: null
+
+  Qwen/Qwen2.5-VL-3B-Instruct:
+    backend: hf_vlm
+    template: prompt/templates/video/temporal_motion_v1.txt
+    params:
+      temperature: 0.7
+      top_p: 0.9
+      max_new_tokens: 256
+
+  Qwen/Qwen3-VL-8B-Instruct:
+    backend: hf_vlm
+    template: prompt/templates/video/temporal_motion_v1.txt
+    params:
+      temperature: 0.7
+      top_p: 0.9
+      max_new_tokens: 256
+
+  Qwen/Qwen3-VL-32B-Instruct:
+    backend: hf_vlm
+    template: prompt/templates/video/temporal_motion_v1.txt
+    params:
+      temperature: 0.7
+      top_p: 0.9
+      max_new_tokens: 256
+
+  Qwen/Qwen3-VL-32B-Thinking:
+    backend: hf_vlm
+    template: prompt/templates/video/temporal_motion_v1.txt
+    params:
+      temperature: 0.7
+      top_p: 0.9
+      max_new_tokens: 256
+
+generators:
+  Wan-AI/Wan2.1-T2V-1.3B-Diffusers:
+    backend: fastvideo
+    params:
+      workload_type: t2v
+      height: 480
+      width: 832
+      num_frames: 81
+      fps: 16
+      steps: 50
+      guidance_scale: 6.0
+      flow_shift: 8.0
+      negative_prompt: >-
+        Bright tones, overexposed, static, blurred details, subtitles, style,
+        works, paintings, images, static, overall gray, worst quality, low
+        quality, JPEG compression residue, ugly, incomplete, extra fingers,
+        poorly drawn hands, poorly drawn faces, deformed, disfigured, misshapen
+        limbs, fused fingers, still picture, messy background, three legs, many
+        people in the background, walking backwards
+
+tasks:
+  vbench_official_six_dimensions:
+    prompt_source: vbench
+    source_path: FastVideo/fastvideo/third_party/eval/vbench/prompts
+    subset:
+      mode: official_dimensions
+      dimensions:
+        - subject_consistency
+        - background_consistency
+        - motion_smoothness
+        - dynamic_degree
+        - aesthetic_quality
+        - imaging_quality
+    samples_per_prompt: 5
+    eval:
+      - vbench
+    eval_params:
+      vbench:
+        repo: FastVideo/fastvideo/third_party/eval/vbench
+        prompt_root: FastVideo/fastvideo/third_party/eval/vbench/prompts
+        full_info_path: FastVideo/fastvideo/third_party/eval/vbench/vbench/VBench_full_info.json
+        local: true
+
+sweep:
+  enhancer:
+    - none
+    - Qwen/Qwen2.5-VL-3B-Instruct
+    - Qwen/Qwen3-VL-8B-Instruct
+    - Qwen/Qwen3-VL-32B-Instruct
+    - Qwen/Qwen3-VL-32B-Thinking
+  generator: Wan-AI/Wan2.1-T2V-1.3B-Diffusers
+  task:
+    - vbench_official_six_dimensions

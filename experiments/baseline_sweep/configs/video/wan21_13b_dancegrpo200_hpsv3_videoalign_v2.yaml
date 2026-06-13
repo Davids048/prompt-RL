@@ -1,0 +1,96 @@
+run: wan21_13b_dancegrpo200_hpsv3_videoalign_v2
+output_root: outputs/baseline_sweep
+seed: 430000
+
+enhancers:
+  none: null
+
+  Qwen/Qwen2.5-VL-3B-Instruct:
+    backend: hf_vlm
+    template: prompt/templates/video/temporal_motion_v1.txt
+    params:
+      temperature: 0.7
+      top_p: 0.9
+      max_new_tokens: 256
+
+  Qwen/Qwen3-VL-8B-Instruct:
+    backend: hf_vlm
+    template: prompt/templates/video/temporal_motion_v1.txt
+    params:
+      temperature: 0.7
+      top_p: 0.9
+      max_new_tokens: 256
+
+  Qwen/Qwen3-VL-32B-Instruct:
+    backend: hf_vlm
+    template: prompt/templates/video/temporal_motion_v1.txt
+    params:
+      temperature: 0.7
+      top_p: 0.9
+      max_new_tokens: 256
+
+  Qwen/Qwen3-VL-32B-Thinking:
+    backend: hf_vlm
+    template: prompt/templates/video/temporal_motion_v1.txt
+    params:
+      temperature: 0.7
+      top_p: 0.9
+      max_new_tokens: 256
+
+generators:
+  Wan-AI/Wan2.1-T2V-1.3B-Diffusers:
+    backend: fastvideo
+    params:
+      workload_type: t2v
+      height: 480
+      width: 832
+      num_frames: 81
+      fps: 16
+      steps: 50
+      guidance_scale: 6.0
+      flow_shift: 8.0
+      negative_prompt: >-
+        Bright tones, overexposed, static, blurred details, subtitles, style,
+        works, paintings, images, static, overall gray, worst quality, low
+        quality, JPEG compression residue, ugly, incomplete, extra fingers,
+        poorly drawn hands, poorly drawn faces, deformed, disfigured, misshapen
+        limbs, fused fingers, still picture, messy background, three legs, many
+        people in the background, walking backwards
+
+tasks:
+  dancegrpo_vidprom_top200:
+    prompt_source: txt
+    source_path: evaluations/DanceGRPO/assets/video_prompts.txt
+    subset:
+      mode: first_n
+      n: 200
+    samples_per_prompt: 1
+    eval:
+      - hpsv3
+      - videoalign
+    eval_params:
+      hpsv3:
+        repo: evaluations/HPSv3
+        frame_sampling: uniform
+        num_frames: 8
+        batch_size: 32
+        aggregate: mean
+      videoalign:
+        repo: evaluations/DanceGRPO
+        checkpoint_dir: evaluations/DanceGRPO/videoalign_ckpt
+        metrics:
+          - visual_quality
+          - motion_quality
+          - text_alignment
+        primary_metric: visual_quality
+
+sweep:
+  enhancer:
+    - none
+    - Qwen/Qwen2.5-VL-3B-Instruct
+    - Qwen/Qwen3-VL-8B-Instruct
+    - Qwen/Qwen3-VL-32B-Instruct
+    - Qwen/Qwen3-VL-32B-Thinking
+  generator: Wan-AI/Wan2.1-T2V-1.3B-Diffusers
+  task:
+    - dancegrpo_vidprom_top200
