@@ -5,6 +5,7 @@ This workspace vendors no third-party source trees in the root Git history. Clon
 | Local path                                | Remote URL                                          | Branch   | Commit     | Local status                                                        |
 | ----------------------------------------- | --------------------------------------------------- | -------- | ---------- | ------------------------------------------------------------------- |
 | `FastVideo`                               | `https://github.com/hao-ai-lab/FastVideo.git`       | `main`   | `2c137931` | Clean                                                               |
+| `Megatron-LM`                             | `https://github.com/NVIDIA/Megatron-LM.git`         | detached | `1dcf0da`  | Cloned; Slime patch applied; editable install completed             |
 | `evaluations/CLIP`                        | `https://github.com/openai/CLIP.git`                | `main`   | `d05afc4`  | Clean                                                               |
 | `evaluations/DanceGRPO`                   | `https://github.com/XueZeyue/DanceGRPO.git`         | `main`   | `15cc71d`  | Clean; used for VidProM video prompts / VideoAlign provenance       |
 | `evaluations/HPSv2`                       | `https://github.com/tgxs002/HPSv2.git`              | `master` | `866735e`  | Clean                                                               |

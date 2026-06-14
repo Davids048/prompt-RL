@@ -36,10 +36,43 @@
 !experiments/baseline_sweep/src/
 !experiments/baseline_sweep/src/**/
 !experiments/baseline_sweep/src/**/*.py
+!experiments/rl_prompt_enhancer/
+!experiments/rl_prompt_enhancer/*.md
+!experiments/rl_prompt_enhancer/*.py
+!experiments/rl_prompt_enhancer/configs/
+!experiments/rl_prompt_enhancer/configs/*.yaml
+!experiments/rl_prompt_enhancer/env_setup/
+!experiments/rl_prompt_enhancer/env_setup/*.md
+!experiments/rl_prompt_enhancer/env_setup/*.sh
+!experiments/rl_prompt_enhancer/launch/
+!experiments/rl_prompt_enhancer/launch/*.md
+!experiments/rl_prompt_enhancer/launch/*.sh
+!experiments/rl_prompt_enhancer/phase1_slime_sanity/
+!experiments/rl_prompt_enhancer/phase1_slime_sanity/scripts/
+!experiments/rl_prompt_enhancer/phase1_slime_sanity/scripts/*.sh
+!experiments/rl_prompt_enhancer/phase2_fastvideo_image_grpo/
+!experiments/rl_prompt_enhancer/phase2_fastvideo_image_grpo/*.md
+!experiments/rl_prompt_enhancer/phase2_fastvideo_image_grpo/*.py
+!experiments/rl_prompt_enhancer/phase2_fastvideo_image_grpo/scripts/
+!experiments/rl_prompt_enhancer/phase2_fastvideo_image_grpo/scripts/*.py
+!experiments/rl_prompt_enhancer/phase2_fastvideo_image_grpo/scripts/*.sh
 
 !papers/
 !papers/*.md
 !papers/*.txt
+
+!rlprompt_phase2_yaml_config_migration_plan.md
+
+!rl_prompt_enhancer/
+!rl_prompt_enhancer/**/
+!rl_prompt_enhancer/**/*.py
+!rl_prompt_enhancer/**/*.md
+!rl_prompt_enhancer/configs/*.yaml
+
+# User-requested exception: keep the Slime checkout visible to root Git while
+# developing the RL prompt-enhancer training path.
+!slime/
+!slime/**
 
 !patches/
 !patches/reward-server/

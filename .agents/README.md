@@ -23,6 +23,9 @@ evaluations.md
 open_questions.md
   Known uncertainties and next decisions before scaling experiments.
 
+qwen35_9b_rationale.md
+  Why `Qwen/Qwen3.5-9B` is the first prompt-enhancer model candidate.
+
 change_log.md
   Dated progress log.
 ```

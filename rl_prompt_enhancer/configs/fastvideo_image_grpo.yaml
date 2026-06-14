@@ -1,0 +1,181 @@
+run:
+  name: rlprompt_fastvideo_image_grpo_full_epoch_group8
+  output_dir: /home/hal-jundas/codes/UniRL/experiments/rlprompt_fastvideo_image_grpo_full_epoch_group8
+  allow_existing: true
+  contract:
+    goal: Run image-only GRPO for one epoch over the full DiffusionNFT PickScore prompt set with group size 8.
+    setup: Uses Qwen/Qwen3.5-9B, torch-dist checkpoint, full DiffusionNFT PickScore prompts, FastVideo, PickScore, CLIPScore, and a validation baseline before training.
+    launch: /home/hal-jundas/codes/UniRL/.venv/bin/python -m rl_prompt_enhancer.yaml_launcher --config /home/hal-jundas/codes/UniRL/rl_prompt_enhancer/configs/fastvideo_image_grpo.yaml
+    class: real experiment
+
+paths:
+  repo_root: /home/hal-jundas/codes/UniRL
+  python: /home/hal-jundas/codes/UniRL/.venv/bin/python
+  slime_root: /home/hal-jundas/codes/UniRL/slime
+  fastvideo_root: /home/hal-jundas/codes/UniRL/FastVideo
+  megatron_root: /home/hal-jundas/codes/UniRL/Megatron-LM
+
+compute:
+  mode: slurm_overlap
+  # Two-node topology, live-verified with Slurm before launch rendering.
+  slime:
+    job_id: 4884
+    nodelist: hpc-rack-2-9
+    cuda_visible_devices: "0,1,2,3"
+    num_gpus: 4
+  fastvideo:
+    job_id: 4882
+    nodelist: hpc-rack-2-3
+    public_host: hpc-rack-2-3
+    cuda_visible_devices: "0,1,2,3"
+    num_gpus: 4
+
+ray:
+  master_addr: 127.0.0.1
+  address: http://127.0.0.1:8265
+  port: 6385
+  dashboard_port: 8265
+  client_server_port: 10001
+  temp_dir: /tmp/rlpe2_ray
+  keep_alive: true
+  startup_seconds: 30
+  health_retries: 30
+  health_interval_seconds: 10
+  runtime_env:
+    RAY_USE_UVLOOP: "0"
+    CUDA_DEVICE_MAX_CONNECTIONS: "1"
+
+fastvideo_service:
+  host: 0.0.0.0
+  port: 18080
+  public_host: hpc-rack-2-3
+  # Request-level data parallelism: four one-GPU service workers on one node.
+  data_parallel_workers: 4
+  worker_ports: [18080, 18081, 18082, 18083]
+  output_root: /home/hal-jundas/codes/UniRL/experiments/rlprompt_fastvideo_image_grpo_full_epoch_group8/fastvideo_service/artifacts
+  ledger_root: /home/hal-jundas/codes/UniRL/experiments/rlprompt_fastvideo_image_grpo_full_epoch_group8/fastvideo_service/ledgers
+  execution_backend: mp
+  tp_size: 1
+  sp_size: 1
+  hsdp_replicate_dim: 1
+  hsdp_shard_dim: 1
+  workload_type: t2v
+  reward_device: cuda
+  pickscore_processor_model: laion/CLIP-ViT-H-14-laion2B-s32B-b79K
+  pickscore_model: yuvalkirstain/PickScore_v1
+  clipscore_model: openai/clip-vit-large-patch14
+
+prompt_data:
+  source_path: /home/hal-jundas/codes/UniRL/evaluations/flow_grpo/dataset/pickscore/train.txt
+  jsonl_path: /home/hal-jundas/codes/UniRL/experiments/rl_prompt_enhancer/prompts/diffusion_nft_pickscore_train_full.jsonl
+  prompt_id_prefix: diffusion_nft_pickscore_train
+  prompt_template: /home/hal-jundas/codes/UniRL/experiments/baseline_sweep/prompt/templates/image/geneval/promptrl_style_v1.txt
+
+validation:
+  enabled: true
+  source_path: /home/hal-jundas/codes/UniRL/FastVideo/examples/train/configs/distribution_matching/wan/dmd2_text_only_validation.json
+  jsonl_path: /home/hal-jundas/codes/UniRL/experiments/rlprompt_fastvideo_image_grpo_full_epoch_group8/snapshot/validation/dmd2_text_only_validation.jsonl
+  eval_config_path: /home/hal-jundas/codes/UniRL/experiments/rlprompt_fastvideo_image_grpo_full_epoch_group8/snapshot/validation/slime_eval_config.yaml
+  dataset_name: dmd2_text_only_validation
+  prompt_id_prefix: dmd2_text_only_validation
+  eval_interval: 20
+  # false means run the validation baseline before any training update.
+  skip_eval_before_train: false
+  input_key: original_prompt
+  metadata_key: metadata
+  n_samples_per_eval_prompt: 1
+  max_response_len: 256
+  temperature: 0.8
+
+prompt_enhancer:
+  model_id: Qwen/Qwen3.5-9B
+  hf_checkpoint: /home/hal-jundas/codes/UniRL/.cache/rl_prompt_enhancer/phase1/models/Qwen3.5-9B
+  torch_dist_checkpoint: /dev/shm/Qwen3.5-9B_torch_dist
+  slime_model_script: /home/hal-jundas/codes/UniRL/slime/scripts/models/qwen3.5-9B.sh
+  custom_generate_function_path: rl_prompt_enhancer.slime_hooks.fastvideo_generate.generate
+  response_rule: parse text inside <answer>...</answer>
+
+generation:
+  artifact_kind: image
+  model: Wan-AI/Wan2.1-T2V-1.3B-Diffusers
+  height: 480
+  width: 832
+  fps: 16
+  num_frames: 1
+  num_inference_steps: 50
+  guidance_scale: 6.0
+  flow_shift: 8.0
+  negative_prompt: Bright tones, overexposed, static, blurred details, subtitles, style, works, paintings, images, static, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, misshapen limbs, fused fingers, still picture, messy background, three legs, many people in the background, walking backwards
+
+seed_policy:
+  base_seed: 430000
+  rule: same comparison_group_id uses the same seed
+
+reward:
+  implementation: FastVideo
+  metrics:
+    pickscore: 1.0
+    clipscore: 1.0
+  scalar_key: avg
+
+slime_grpo:
+  save_interval: 9999
+  input_key: original_prompt
+  metadata_key: metadata
+  apply_chat_template: true
+  reward_key: avg
+  # One rollout per prompt in the 25,432-row full DiffusionNFT PickScore JSONL.
+  num_rollout: 25432
+  rollout_batch_size: 1
+  n_samples_per_prompt: 8
+  rollout_max_response_len: 256
+  rollout_temperature: 0.8
+  global_batch_size: 8
+  optimizer:
+    name: adam
+    lr: 1.0e-6
+    lr_decay_style: constant
+    weight_decay: 0.1
+    adam_beta1: 0.9
+    adam_beta2: 0.98
+  grpo:
+    advantage_estimator: grpo
+    use_kl_loss: true
+    kl_loss_coef: 0.00
+    kl_loss_type: low_var_kl
+    entropy_coef: 0.00
+    eps_clip: 0.2
+    eps_clip_high: 0.28
+  model_parallel:
+    tensor_model_parallel_size: 1
+    sequence_parallel: true
+    pipeline_model_parallel_size: 1
+    context_parallel_size: 1
+    expert_model_parallel_size: 1
+    expert_tensor_parallel_size: 1
+    qkv_format: bshd
+    micro_batch_size: 1
+  sglang:
+    rollout_num_gpus_per_engine: 1
+    mem_fraction_static: 0.7
+    cuda_graph_max_bs: 32
+    enable_metrics: true
+  misc:
+    attention_dropout: 0.0
+    hidden_dropout: 0.0
+    accumulate_allreduce_grads_in_fp32: true
+    attention_softmax_in_fp32: true
+    attention_backend: flash
+    loss_mask_type: qwen3_5
+    actor_num_nodes: 1
+    colocate: true
+  jit:
+    cc: /home/shared-bin/local/usr/bin/gcc-13
+    cxx: /home/shared-bin/local/usr/bin/g++-13
+    nvcc_prepend_flags: -ccbin=/home/shared-bin/local/usr/bin/g++-13
+
+wandb:
+  enabled: true
+  project: prompt RL
+  group: rlprompt_fastvideo_image_grpo_full_epoch_group8
+  disable_random_suffix: true

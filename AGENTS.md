@@ -25,6 +25,8 @@ experiments/image_calibration/*.jsonl
 experiments/image_calibration/prompts/*.txt
 papers/*.md
 papers/*.txt
+rl_prompt_enhancer/**/*.py
+rl_prompt_enhancer/**/*.md
 externals.lock.md
 patches/reward-server/*.patch
 ```
