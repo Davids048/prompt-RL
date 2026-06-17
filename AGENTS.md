@@ -23,10 +23,12 @@ experiments/image_calibration/*.sh
 experiments/image_calibration/*.json
 experiments/image_calibration/*.jsonl
 experiments/image_calibration/prompts/*.txt
+data/rl_prompt_enhancer/**/*.jsonl
 papers/*.md
 papers/*.txt
 rl_prompt_enhancer/**/*.py
 rl_prompt_enhancer/**/*.md
+rl_prompt_enhancer/configs/*.yaml
 externals.lock.md
 patches/reward-server/*.patch
 ```

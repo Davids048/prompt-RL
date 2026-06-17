@@ -1,5 +1,16 @@
 # Change Log
 
+## 2026-06-17
+
+- Re-established the RL prompt-enhancer source/data/run boundary: `/home/hal-jundas/codes/UniRL/rl_prompt_enhancer/` is the single maintained source/config surface, the reusable full prompt JSONL lives under `/home/hal-jundas/codes/UniRL/data/rl_prompt_enhancer/prompts/`, and `/home/hal-jundas/codes/UniRL/experiments/` is for generated run records. `.gitignore` no longer unignores source-like files under `/home/hal-jundas/codes/UniRL/experiments/rl_prompt_enhancer/`; the old untracked experiment-side launcher/config scaffold was removed after backing it up to `/tmp/unirl_rlpe_experiment_scaffold_source_backup_20260617.tar`; and the canonical FastVideo image-GRPO YAML now consumes `/home/hal-jundas/codes/UniRL/data/rl_prompt_enhancer/prompts/diffusion_nft_pickscore_train_full.jsonl`.
+- Removed the no-longer-needed `/home/hal-jundas/codes/UniRL/data/rl_prompt_enhancer/prompts/diffusion_nft_pickscore_train_tiny16.jsonl` smoke-test fixture; historical run records may still reference the old experiment-side tiny16 path, but the current canonical YAML uses the full prompt JSONL.
+
+## 2026-06-15
+
+- Added `/home/hal-jundas/codes/UniRL/rlprompt_fastvideo_identity_baseline_plan.md` for a no-training, no-prompt-enhancement FastVideo identity baseline over the same 25,432 DiffusionNFT PickScore prompts, using `original_prompt == enhanced_prompt` and logging PickScore, CLIPScore, and `avg`.
+- Stopped the relaunched full-epoch image-only FastVideo+Slime GRPO experiment `rlprompt_phase2_full_epoch_group8_2`: the tmux launcher session was terminated, Ray/FastVideo/Slime experiment processes were no longer present on jobs `4884`/`4882`, and the held Slurm allocations remained running.
+- Relaunched the full-epoch image-only FastVideo+Slime GRPO run as `/home/hal-jundas/codes/UniRL/experiments/rlprompt_phase2_full_epoch_group8_2` on the same two held allocations: Slime/Ray on Slurm job `4884` / `hpc-rack-2-9` and FastVideo on Slurm job `4882` / `hpc-rack-2-3`; Ray job `raysubmit_q68pWphAk9H2pqEN` was `RUNNING`, and W&B run `https://wandb.ai/js202/prompt%20RL/runs/pay3k64a` was visible before monitoring stopped.
+
 ## 2026-06-14
 
 - Removed the deprecated `phase2` vocabulary from reusable code under `/home/hal-jundas/codes/UniRL/rl_prompt_enhancer/`: renamed `phase2_yaml_launcher.py` to `yaml_launcher.py`, renamed the canonical config to `configs/fastvideo_image_grpo.yaml`, updated bridge/validator wording, and updated the thin external launcher to import the neutral module.

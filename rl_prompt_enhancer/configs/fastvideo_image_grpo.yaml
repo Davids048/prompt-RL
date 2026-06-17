@@ -67,7 +67,7 @@ fastvideo_service:
 
 prompt_data:
   source_path: /home/hal-jundas/codes/UniRL/evaluations/flow_grpo/dataset/pickscore/train.txt
-  jsonl_path: /home/hal-jundas/codes/UniRL/experiments/rl_prompt_enhancer/prompts/diffusion_nft_pickscore_train_full.jsonl
+  jsonl_path: /home/hal-jundas/codes/UniRL/data/rl_prompt_enhancer/prompts/diffusion_nft_pickscore_train_full.jsonl
   prompt_id_prefix: diffusion_nft_pickscore_train
   prompt_template: /home/hal-jundas/codes/UniRL/experiments/baseline_sweep/prompt/templates/image/geneval/promptrl_style_v1.txt
 
