@@ -1,0 +1,14 @@
+eval:
+  defaults:
+    input_key: original_prompt
+    metadata_key: metadata
+    n_samples_per_eval_prompt: 1
+    max_response_len: 256
+    temperature: 0.8
+  datasets:
+    - name: dmd2_text_only_validation
+      path: /home/hal-jundas/codes/UniRL/data/rl_prompt_enhancer/validation/dmd2_text_only_validation.jsonl
+      custom_generate_function_path: rl_prompt_enhancer.slime_hooks.fastvideo_generate.generate
+      metadata_overrides:
+        validation_source: /home/hal-jundas/codes/UniRL/FastVideo/examples/train/configs/distribution_matching/wan/dmd2_text_only_validation.json
+        validation_prompt_count: 16

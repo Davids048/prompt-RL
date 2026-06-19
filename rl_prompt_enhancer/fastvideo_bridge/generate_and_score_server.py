@@ -62,12 +62,18 @@ def _env_int(name: str, default: int) -> int:
 
 
 def _reward_weights() -> dict[str, float]:
-    raw = os.environ.get("RLPE_REWARD_WEIGHTS_JSON")
-    if not raw:
-        return dict(REWARD_WEIGHTS)
-    data = json.loads(raw)
+    """Load reward weights from a readable snapshot path or inline JSON env."""
+    path = os.environ.get("RLPE_REWARD_WEIGHTS_PATH")
+    if path:
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+    else:
+        raw = os.environ.get("RLPE_REWARD_WEIGHTS_JSON")
+        if not raw:
+            return dict(REWARD_WEIGHTS)
+        data = json.loads(raw)
     if not isinstance(data, dict) or not data:
-        raise RuntimeError("RLPE_REWARD_WEIGHTS_JSON must be a non-empty JSON object")
+        raise RuntimeError("reward weights must be a non-empty JSON object")
     return {str(key): float(value) for key, value in data.items()}
 
 

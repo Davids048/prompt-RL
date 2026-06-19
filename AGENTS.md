@@ -28,6 +28,7 @@ papers/*.md
 papers/*.txt
 rl_prompt_enhancer/**/*.py
 rl_prompt_enhancer/**/*.md
+rl_prompt_enhancer/**/*.sh
 rl_prompt_enhancer/configs/*.yaml
 externals.lock.md
 patches/reward-server/*.patch
