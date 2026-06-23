@@ -1,11 +1,12 @@
 # External Repository Pins
 
-This workspace vendors no third-party source trees in the root Git history. Clone these external repositories separately, then apply the local patches in `patches/reward-server/` where noted.
+This workspace vendors no third-party source trees in the root Git history. Clone these external repositories separately, then apply the local patches in `patches/reward-server/` or `patches/slime/` where noted.
 
 | Local path                                | Remote URL                                          | Branch   | Commit     | Local status                                                        |
 | ----------------------------------------- | --------------------------------------------------- | -------- | ---------- | ------------------------------------------------------------------- |
 | `FastVideo`                               | `https://github.com/hao-ai-lab/FastVideo.git`       | `main`   | `2c137931` | Clean                                                               |
 | `Megatron-LM`                             | `https://github.com/NVIDIA/Megatron-LM.git`         | detached | `1dcf0da`  | Cloned; Slime patch applied; editable install completed             |
+| `slime`                                   | `https://github.com/THUDM/slime.git`                | `main`   | `5d7296a`  | Apply `patches/slime/qwen35-prompt-enhancer-rl-compat.patch`       |
 | `evaluations/CLIP`                        | `https://github.com/openai/CLIP.git`                | `main`   | `d05afc4`  | Clean                                                               |
 | `evaluations/DanceGRPO`                   | `https://github.com/XueZeyue/DanceGRPO.git`         | `main`   | `15cc71d`  | Clean; used for VidProM video prompts / VideoAlign provenance       |
 | `evaluations/HPSv2`                       | `https://github.com/tgxs002/HPSv2.git`              | `master` | `866735e`  | Clean                                                               |
@@ -21,6 +22,8 @@ This workspace vendors no third-party source trees in the root Git history. Clon
 
 Notes:
 
-- `FastVideo/` and `evaluations/` are intentionally ignored by the root repo to avoid vendoring nested Git checkouts.
+- `FastVideo/`, `slime/`, `Megatron-LM/`, and `evaluations/` are intentionally ignored by the root repo to avoid vendoring nested Git checkouts.
+- Slime's local prompt-enhancer RL compatibility edits live in `patches/slime/qwen35-prompt-enhancer-rl-compat.patch`.
+- Megatron-LM is rebuilt from Slime's pinned base commit plus Slime's `docker/patch/latest/megatron.patch`; root Git does not track Megatron changes separately.
 - Runtime environments, model caches, generated media, and benchmark outputs are also intentionally ignored.
 - `plan.md` and `reports/` are not tracked yet by current project choice.

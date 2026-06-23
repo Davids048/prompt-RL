@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-06-23
+
+- Switched Slime back to an ignored external checkout while tracking the prompt-enhancer RL compatibility delta as `/home/hal-jundas/codes/UniRL/patches/slime/qwen35-prompt-enhancer-rl-compat.patch`; added `/home/hal-jundas/codes/UniRL/README.md` with setup steps for applying the Slime patch and reconstructing Megatron-LM from Slime's pinned base commit plus `slime/docker/patch/latest/megatron.patch`.
+- Rechecked `/home/hal-jundas/codes/UniRL/Megatron-LM`: the only current changes are 21 staged files matching Slime's `/home/hal-jundas/codes/UniRL/slime/docker/patch/latest/megatron.patch`; reverse-applying that patch to a temporary copied index left no staged diff, and the real index was restored to the same 21 staged files.
+
 ## 2026-06-21
 
 - Added `/home/hal-jundas/codes/UniRL/experiments/rlprompt_phase2_group8_200step_20260619_165545/validation_viewer.html`, a static validation viewer joined from the W&B media history, FastVideo request ledger, and FastVideo reward ledger. It exposes a slider over `eval/step` values `0, 19, 39, 59, 79, 99, 119, 139`, shows the corresponding W&B media step, and displays 128 prompt/image/reward rows with no missing images or caption/reward mismatches.

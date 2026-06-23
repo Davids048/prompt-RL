@@ -4,6 +4,7 @@
 
 !.gitignore
 !AGENTS.md
+!README.md
 !externals.lock.md
 
 !.agents/
@@ -56,14 +57,11 @@
 !rl_prompt_enhancer/configs/*.json
 !rl_prompt_enhancer/configs/*.yaml
 
-# User-requested exception: keep the Slime checkout visible to root Git while
-# developing the RL prompt-enhancer training path.
-!slime/
-!slime/**
-
 !patches/
 !patches/reward-server/
 !patches/reward-server/*.patch
+!patches/slime/
+!patches/slime/*.patch
 
 # Explicit non-goals for this root repo.
 plan.md
@@ -73,8 +71,10 @@ data/
 !experiments/baseline_sweep/src/reports/**/
 !experiments/baseline_sweep/src/reports/**/*.py
 outputs/
-FastVideo/
-evaluations/
+/FastVideo/
+/evaluations/
+/Megatron-LM/
+/slime/
 .cache/
 .codex/
 .envs/

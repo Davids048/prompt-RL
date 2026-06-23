@@ -14,6 +14,7 @@ Track only the lightweight reproducibility surface:
 
 ```text
 AGENTS.md
+README.md
 .agents/README.md
 .agents/AGENTS.md
 .agents/memory/*.md
@@ -32,8 +33,9 @@ rl_prompt_enhancer/**/*.sh
 rl_prompt_enhancer/configs/*.yaml
 externals.lock.md
 patches/reward-server/*.patch
+patches/slime/*.patch
 ```
 
 Do not track generated artifacts, local environments, caches, raw benchmark outputs, nested third-party repo checkouts, `plan.md`, or `reports/` yet.
 
-`externals.lock.md` records the URL and commit for `FastVideo/`, every direct repo under `evaluations/`, and the nested reward-server `mmdetection/` checkout. `patches/reward-server/*.patch` records the local reward-server and mmdetection compatibility changes without vendoring those repositories into root history.
+`externals.lock.md` records the URL and commit for external checkouts such as `FastVideo/`, `slime/`, `Megatron-LM/`, every direct repo under `evaluations/`, and the nested reward-server `mmdetection/` checkout. `patches/reward-server/*.patch` records the local reward-server and mmdetection compatibility changes, and `patches/slime/*.patch` records UniRL-specific Slime compatibility changes, without vendoring those repositories into root history.

@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-06-17
+Last updated: 2026-06-23
 
 This workspace is now a top-level experiment hub at `/home/hal-jundas/codes/UniRL`. It is not being used as the original UniRL git repository.
 
@@ -40,7 +40,7 @@ slime/
   Local checkout of https://github.com/THUDM/slime for RL-framework comparison and RL prompt-enhancer porting.
   Cloned 2026-06-13 at 5d7296a77a83bb249b257ee1f082d83db16a8079.
   Current preference: use Slime because it is more lightweight; revisit Miles later only if needed.
-  User-requested exception: `slime/` is no longer ignored by the root `.gitignore` as of 2026-06-13.
+  Root Git ignores `slime/`; prompt-enhancer RL compatibility changes are tracked as `patches/slime/qwen35-prompt-enhancer-rl-compat.patch`.
 
 miles/
   Ignored checkout of https://github.com/radixark/miles for RL-framework comparison.
@@ -61,7 +61,7 @@ RL prompt-enhancer execution status as of 2026-06-17:
 - RL prompt-enhancer source/data/run boundary: future launch logic and canonical configs live under `/home/hal-jundas/codes/UniRL/rl_prompt_enhancer/`; the reusable full prompt JSONL lives under `/home/hal-jundas/codes/UniRL/data/rl_prompt_enhancer/prompts/`; generated run records live under `/home/hal-jundas/codes/UniRL/experiments/`. Launch with `/home/hal-jundas/codes/UniRL/.venv/bin/python -m rl_prompt_enhancer.yaml_launcher --config /home/hal-jundas/codes/UniRL/rl_prompt_enhancer/configs/fastvideo_image_grpo.yaml`. The launcher creates the experiment run directory, snapshots the YAML under `snapshot/config.yaml`, renders exact command scripts under `commands/`, and then launches Ray, FastVideo, and Slime.
 - Shell-first launch workflow under review as of 2026-06-19: use `/home/hal-jundas/codes/UniRL/rl_prompt_enhancer/scripts/launch_exp/image_grpo/` as the source default profile, copy its four shell files into `experiments/<run_id>/commands/`, edit the run-local copies directly, snapshot default and used commands, then launch Ray, FastVideo workers, and Slime GRPO from the run's `commands/` directory. Do not add new launch behavior to the legacy YAML launcher while this workflow is being reviewed.
 
-Root versioning policy is intentionally narrow. Track code, reusable prompt data, memory, research Markdown/text notes, `externals.lock.md`, and `patches/reward-server/*.patch`. Do not track `plan.md`, `reports/`, generated outputs, local environments, caches, raw artifacts, or nested third-party repo checkouts except the current user-requested `slime/` visibility exception.
+Root versioning policy is intentionally narrow. Track the repo README, code, reusable prompt data, memory, research Markdown/text notes, `externals.lock.md`, `patches/reward-server/*.patch`, and `patches/slime/*.patch`. Do not track `plan.md`, `reports/`, generated outputs, local environments, caches, raw artifacts, or nested third-party repo checkouts.
 
 Completed image-calibration work now includes both the original 12-prompt SD3.5 Medium pilot and a full PromptRL-style rerun. The full rerun used all GenEval prompts plus OCR1k and PickScore-SFW, comparing no rewrite against PromptRL-style rewrites from `Qwen/Qwen2.5-VL-3B-Instruct`; it did not include the text-only `Qwen/Qwen2.5-3B-Instruct` condition. The run root is `outputs/image_calibration/promptrl_full_sd35_20260528_0439`.
 
