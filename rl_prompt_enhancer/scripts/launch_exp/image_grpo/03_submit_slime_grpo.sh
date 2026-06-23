@@ -143,6 +143,7 @@ submit_slime_grpo() {
         --metadata-key metadata \
         --apply-chat-template \
         --custom-generate-function-path rl_prompt_enhancer.slime_hooks.fastvideo_generate.generate \
+        --custom-eval-rollout-log-function-path rl_prompt_enhancer.slime_hooks.eval_wandb_images.log_eval_images \
         --reward-key avg \
         --num-rollout 25432 \
         --rollout-batch-size 1 \

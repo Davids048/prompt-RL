@@ -130,12 +130,13 @@ def _stable_index(value: Any, fallback: int) -> int:
         return fallback
 
 
-def _request_ids(sample: Sample) -> tuple[str, str, int]:
-    # Tie all candidates from one source prompt to one seed-controlled comparison group.
+def _request_ids(sample: Sample, evaluation: bool = False) -> tuple[str, str, int]:
+    """Build stable artifact IDs while keeping eval artifacts out of train paths."""
     group_index = _stable_index(sample.group_index, _stable_index(sample.index, 0))
     sample_index = _stable_index(sample.index, group_index)
     rollout_index = _stable_index(sample.rollout_id, sample_index)
-    comparison_group_id = f"prompt{group_index:06d}"
+    phase_prefix = "eval_" if evaluation else ""
+    comparison_group_id = f"{phase_prefix}prompt{group_index:06d}"
     request_id = f"{comparison_group_id}_rollout{rollout_index:06d}_sample{sample_index:06d}"
     seed_base = int(os.environ.get("RLPE_SEED_BASE", "430000"))
     return request_id, comparison_group_id, seed_base + group_index
@@ -145,9 +146,10 @@ def _generation_payload(
     sample: Sample,
     original_prompt: str,
     enhanced_prompt: str,
+    evaluation: bool = False,
 ) -> dict[str, Any]:
-    # This payload is the boundary between Slime samples and the FastVideo service.
-    request_id, comparison_group_id, seed = _request_ids(sample)
+    """Create the FastVideo request payload from one Slime rollout sample."""
+    request_id, comparison_group_id, seed = _request_ids(sample, evaluation=evaluation)
     return {
         "request_id": request_id,
         "original_prompt": original_prompt,
@@ -159,7 +161,13 @@ def _generation_payload(
     }
 
 
-async def generate(args, sample: Sample, sampling_params: dict[str, Any]) -> Sample:
+async def generate(
+    args,
+    sample: Sample,
+    sampling_params: dict[str, Any],
+    evaluation: bool = False,
+) -> Sample:
+    """Generate an enhanced prompt, score its FastVideo image, and attach rewards."""
     from slime.rollout.sglang_rollout import GenerateState
 
     # Build the prompt-enhancer request from the original image prompt.
@@ -167,6 +175,7 @@ async def generate(args, sample: Sample, sampling_params: dict[str, Any]) -> Sam
     original_prompt = _original_prompt(sample)
     sample.metadata = sample.metadata or {}
     sample.metadata["original_prompt"] = original_prompt
+    sample.metadata["rlpe_phase"] = "eval" if evaluation else "train"
 
     prompt_text = f"{_template().format(prompt=original_prompt)}\n{OUTPUT_RULES}"
     prompt_ids = state.tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
@@ -221,7 +230,7 @@ async def generate(args, sample: Sample, sampling_params: dict[str, Any]) -> Sam
     sample.update_from_meta_info(args, meta_info)
 
     # FastVideo returns artifact metadata plus the reward dict consumed by Slime.
-    service_payload = _generation_payload(sample, original_prompt, enhanced_prompt)
+    service_payload = _generation_payload(sample, original_prompt, enhanced_prompt, evaluation=evaluation)
     sample.metadata["fastvideo_request"] = service_payload
     service_url = _service_url(service_payload)
     sample.metadata["fastvideo_service_url"] = service_url
