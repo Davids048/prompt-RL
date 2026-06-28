@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-06-28
+
+- Vendored `DiffusionNFT/` as ordinary root-tracked source by explicit user request; its one-time upstream provenance lives only in `DiffusionNFT/PROVENANCE.md`, and generated reproduction outputs, venvs, caches, and reward checkpoints under that tree remain ignored.
+- Added DiffusionNFT reproduction launch surface changes: timestamped default evaluation output directories, DrawBench and OCR launch scripts, and the DrawBench-first reproduction plan. Existing `DiffusionNFT/evaluation_output/` run directories were preserved on disk and not committed.
+
 ## 2026-06-23
 
 - Switched Slime back to an ignored external checkout while tracking the prompt-enhancer RL compatibility delta as `/home/hal-jundas/codes/UniRL/patches/slime/qwen35-prompt-enhancer-rl-compat.patch`; added `/home/hal-jundas/codes/UniRL/README.md` with setup steps for applying the Slime patch and reconstructing Megatron-LM from Slime's pinned base commit plus `slime/docker/patch/latest/megatron.patch`.

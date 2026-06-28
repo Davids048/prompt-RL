@@ -16,6 +16,7 @@
 import argparse
 import os
 import json
+from datetime import datetime
 import torch
 import numpy as np
 from PIL import Image
@@ -53,6 +54,16 @@ def cleanup_distributed():
 def is_main_process(rank):
     """Checks if the current process is the main one (rank 0)."""
     return rank == 0
+
+
+def resolve_output_dir(output_dir, dataset, rank):
+    """Builds a shared timestamped output directory when no explicit path is provided."""
+    output_dir_list = [output_dir]
+    if output_dir is None and is_main_process(rank):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir_list[0] = os.path.join("./evaluation_output", f"{dataset}_{timestamp}")
+    dist.broadcast_object_list(output_dir_list, src=0)
+    return output_dir_list[0]
 
 
 class TextPromptDataset(Dataset):
@@ -102,6 +113,7 @@ def main(args):
     setup_distributed(rank, world_size)
     device = torch.device(f"cuda:{local_rank}")
     torch.cuda.set_device(device)
+    args.output_dir = resolve_output_dir(args.output_dir, args.dataset, rank)
 
     # --- Mixed Precision Setup ---
     mixed_precision_dtype = None
@@ -347,8 +359,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="./evaluation_output",
-        help="Directory to save evaluation results and generated images.",
+        default=None,
+        help="Directory to save evaluation results and generated images. Defaults to ./evaluation_output/<dataset>_<timestamp>/.",
     )
     parser.add_argument(
         "--num_inference_steps", type=int, default=40, help="Number of inference steps for the diffusion pipeline."

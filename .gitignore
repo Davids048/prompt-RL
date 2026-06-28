@@ -32,7 +32,9 @@ DiffusionNFT/reward_ckpts/
 DiffusionNFT/wandb/
 DiffusionNFT/logs/
 DiffusionNFT/outputs/
+DiffusionNFT/checkpoints
 DiffusionNFT/checkpoints/
+DiffusionNFT/ckpts
 DiffusionNFT/ckpts/
 DiffusionNFT/mmdetection/
 DiffusionNFT/mmcv/
