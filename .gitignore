@@ -13,6 +13,31 @@
 !.agents/memory/
 !.agents/memory/*.md
 
+!DiffusionNFT/
+!DiffusionNFT/**
+DiffusionNFT/.agents/
+DiffusionNFT/.cache/
+DiffusionNFT/.codex/
+DiffusionNFT/.env
+DiffusionNFT/.uv-cache/
+DiffusionNFT/.venv/
+DiffusionNFT/.venv-sglang/
+DiffusionNFT/__pycache__/
+DiffusionNFT/**/__pycache__/
+DiffusionNFT/.pytest_cache/
+DiffusionNFT/.ruff_cache/
+DiffusionNFT/diffusion_nft.egg-info/
+DiffusionNFT/evaluation_output/
+DiffusionNFT/reward_ckpts/
+DiffusionNFT/wandb/
+DiffusionNFT/logs/
+DiffusionNFT/outputs/
+DiffusionNFT/checkpoints/
+DiffusionNFT/ckpts/
+DiffusionNFT/mmdetection/
+DiffusionNFT/mmcv/
+DiffusionNFT/HPSv2/
+
 !experiments/
 !experiments/image_calibration/
 !experiments/image_calibration/README.md
@@ -81,3 +106,4 @@ outputs/
 .venv/
 __pycache__/
 *.py[cod]
+tmux-client-*.log

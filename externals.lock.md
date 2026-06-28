@@ -1,6 +1,6 @@
 # External Repository Pins
 
-This workspace vendors no third-party source trees in the root Git history. Clone these external repositories separately, then apply the local patches in `patches/reward-server/` or `patches/slime/` where noted.
+This workspace vendors no third-party source trees in the root Git history except the explicitly user-requested `DiffusionNFT/` source tree. Clone the remaining external repositories separately, then apply the local patches in `patches/reward-server/` or `patches/slime/` where noted.
 
 | Local path                                | Remote URL                                          | Branch   | Commit     | Local status                                                        |
 | ----------------------------------------- | --------------------------------------------------- | -------- | ---------- | ------------------------------------------------------------------- |
@@ -22,6 +22,7 @@ This workspace vendors no third-party source trees in the root Git history. Clon
 
 Notes:
 
+- `DiffusionNFT/` is intentionally vendored as ordinary source; its one-time upstream provenance is recorded in `DiffusionNFT/PROVENANCE.md`.
 - `FastVideo/`, `slime/`, `Megatron-LM/`, and `evaluations/` are intentionally ignored by the root repo to avoid vendoring nested Git checkouts.
 - Slime's local prompt-enhancer RL compatibility edits live in `patches/slime/qwen35-prompt-enhancer-rl-compat.patch`.
 - Megatron-LM is rebuilt from Slime's pinned base commit plus Slime's `docker/patch/latest/megatron.patch`; root Git does not track Megatron changes separately.

@@ -34,8 +34,11 @@ rl_prompt_enhancer/configs/*.yaml
 externals.lock.md
 patches/reward-server/*.patch
 patches/slime/*.patch
+DiffusionNFT/**
 ```
 
 Do not track generated artifacts, local environments, caches, raw benchmark outputs, nested third-party repo checkouts, `plan.md`, or `reports/` yet.
+
+`DiffusionNFT/` is an explicit vendored-source exception requested by the user. Do not edit or append to `DiffusionNFT/PROVENANCE.md` unless the user explicitly allows it; that file is a one-time upstream provenance record, not a changelog.
 
 `externals.lock.md` records the URL and commit for external checkouts such as `FastVideo/`, `slime/`, `Megatron-LM/`, every direct repo under `evaluations/`, and the nested reward-server `mmdetection/` checkout. `patches/reward-server/*.patch` records the local reward-server and mmdetection compatibility changes, and `patches/slime/*.patch` records UniRL-specific Slime compatibility changes, without vendoring those repositories into root history.
