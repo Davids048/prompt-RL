@@ -5,10 +5,11 @@ set -euo pipefail
 # before torchrun so stdout/stderr and evaluation artifacts share one location.
 
 REPO_ROOT="/mnt/weka/home/junda.su/codes/prompt-RL/DiffusionNFT"
-RUN_ID="${RUN_ID:-ocr_$(date +%Y%m%d_%H%M%S)}"
-OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/evaluation_output/${RUN_ID}}"
-OUT_LOG="${OUTPUT_DIR}/launch.out"
-ERR_LOG="${OUTPUT_DIR}/launch.err"
+
+# Run artifact locations are resolved after .env is loaded so BASE_MODE and
+# user-provided RUN_ID or OUTPUT_DIR overrides are reflected in the run name.
+RUN_ID="${RUN_ID:-}"
+OUTPUT_DIR="${OUTPUT_DIR:-}"
 
 NPROC_PER_NODE="${NPROC_PER_NODE:-8}"
 CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}"
@@ -26,6 +27,17 @@ if [[ -f "${REPO_ROOT}/.env" ]]; then
   source "${REPO_ROOT}/.env"
   set +a
 fi
+
+if [[ -z "${RUN_ID}" ]]; then
+  if [[ "${BASE_MODE:-0}" == "1" ]]; then
+    RUN_ID="ocr_base_$(date +%Y%m%d_%H%M%S)"
+  else
+    RUN_ID="ocr_$(date +%Y%m%d_%H%M%S)"
+  fi
+fi
+OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/evaluation_output/${RUN_ID}}"
+OUT_LOG="${OUTPUT_DIR}/launch.out"
+ERR_LOG="${OUTPUT_DIR}/launch.err"
 
 if [[ ! -x "${REPO_ROOT}/.venv/bin/python" ]]; then
   echo "Missing Python environment: ${REPO_ROOT}/.venv" >&2
@@ -83,6 +95,15 @@ echo "stderr log: ${ERR_LOG}"
   echo "MIXED_PRECISION=${MIXED_PRECISION}"
   echo "NUM_INFERENCE_STEPS=${NUM_INFERENCE_STEPS}"
   echo "RESOLUTION=${RESOLUTION}"
+  echo
+
+  if [[ "${BASE_MODE:-0}" == "1" ]]; then
+    LORA_HF_PATH=""
+    GUIDANCE_SCALE="4.5"
+    echo "BASE_MODE=1: launching base SD3.5 with empty LORA_HF_PATH and GUIDANCE_SCALE=4.5."
+  fi
+  echo "Effective LORA_HF_PATH=${LORA_HF_PATH:-<base model>}"
+  echo "Effective GUIDANCE_SCALE=${GUIDANCE_SCALE}"
   echo
 
   "${REPO_ROOT}/.venv/bin/torchrun" --nproc_per_node="${NPROC_PER_NODE}" \

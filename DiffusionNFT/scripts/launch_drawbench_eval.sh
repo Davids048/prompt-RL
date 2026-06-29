@@ -9,12 +9,10 @@ REPO_ROOT="/mnt/weka/home/junda.su/codes/prompt-RL/DiffusionNFT"
 MAIN_VENV="${MAIN_VENV:-${REPO_ROOT}/.venv}"
 SGLANG_VENV="${SGLANG_VENV:-${REPO_ROOT}/.venv-sglang}"
 
-# Run artifact locations.
-RUN_ID="${RUN_ID:-drawbench_$(date +%Y%m%d_%H%M%S)}"
-OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/evaluation_output/${RUN_ID}}"
-OUT_LOG="${OUTPUT_DIR}/launch.out"
-ERR_LOG="${OUTPUT_DIR}/launch.err"
-UNIFIEDREWARD_LOG="${OUTPUT_DIR}/unifiedreward_server.log"
+# Run artifact locations are resolved after .env is loaded so BASE_MODE and
+# user-provided RUN_ID or OUTPUT_DIR overrides are reflected in the run name.
+RUN_ID="${RUN_ID:-}"
+OUTPUT_DIR="${OUTPUT_DIR:-}"
 
 # Distributed evaluation topology.
 NPROC_PER_NODE="${NPROC_PER_NODE:-8}"
@@ -46,6 +44,18 @@ if [[ -f "${REPO_ROOT}/.env" ]]; then
   source "${REPO_ROOT}/.env"
   set +a
 fi
+
+if [[ -z "${RUN_ID}" ]]; then
+  if [[ "${BASE_MODE:-0}" == "1" ]]; then
+    RUN_ID="drawbench_base_$(date +%Y%m%d_%H%M%S)"
+  else
+    RUN_ID="drawbench_$(date +%Y%m%d_%H%M%S)"
+  fi
+fi
+OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/evaluation_output/${RUN_ID}}"
+OUT_LOG="${OUTPUT_DIR}/launch.out"
+ERR_LOG="${OUTPUT_DIR}/launch.err"
+UNIFIEDREWARD_LOG="${OUTPUT_DIR}/unifiedreward_server.log"
 
 # Create the run directory before tee so launch logs live beside results.
 mkdir -p "${OUTPUT_DIR}"
@@ -171,6 +181,15 @@ echo "RESOLUTION=${RESOLUTION}"
 echo
 
 export CUDA_VISIBLE_DEVICES="${EVAL_CUDA_VISIBLE_DEVICES}"
+
+if [[ "${BASE_MODE:-0}" == "1" ]]; then
+  LORA_HF_PATH=""
+  GUIDANCE_SCALE="4.5"
+  echo "BASE_MODE=1: launching base SD3.5 with empty LORA_HF_PATH and GUIDANCE_SCALE=4.5."
+fi
+echo "Effective LORA_HF_PATH=${LORA_HF_PATH:-<base model>}"
+echo "Effective GUIDANCE_SCALE=${GUIDANCE_SCALE}"
+echo
 
 "${MAIN_VENV}/bin/torchrun" --nproc_per_node="${NPROC_PER_NODE}" \
   --master_port="${MASTER_PORT}" \

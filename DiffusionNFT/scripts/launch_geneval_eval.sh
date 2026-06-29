@@ -8,11 +8,10 @@ set -euo pipefail
 REPO_ROOT="/mnt/weka/home/junda.su/codes/prompt-RL/DiffusionNFT"
 MAIN_VENV="${MAIN_VENV:-${REPO_ROOT}/.venv}"
 
-# Run artifact locations.
-RUN_ID="${RUN_ID:-geneval_$(date +%Y%m%d_%H%M%S)}"
-OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/evaluation_output/${RUN_ID}}"
-OUT_LOG="${OUTPUT_DIR}/launch.out"
-ERR_LOG="${OUTPUT_DIR}/launch.err"
+# Run artifact locations are resolved after .env is loaded so BASE_MODE and
+# user-provided RUN_ID or OUTPUT_DIR overrides are reflected in the run name.
+RUN_ID="${RUN_ID:-}"
+OUTPUT_DIR="${OUTPUT_DIR:-}"
 
 # Distributed evaluation topology.
 NPROC_PER_NODE="${NPROC_PER_NODE:-8}"
@@ -34,6 +33,17 @@ if [[ -f "${REPO_ROOT}/.env" ]]; then
   source "${REPO_ROOT}/.env"
   set +a
 fi
+
+if [[ -z "${RUN_ID}" ]]; then
+  if [[ "${BASE_MODE:-0}" == "1" ]]; then
+    RUN_ID="geneval_base_$(date +%Y%m%d_%H%M%S)"
+  else
+    RUN_ID="geneval_$(date +%Y%m%d_%H%M%S)"
+  fi
+fi
+OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/evaluation_output/${RUN_ID}}"
+OUT_LOG="${OUTPUT_DIR}/launch.out"
+ERR_LOG="${OUTPUT_DIR}/launch.err"
 
 # Keep GenEval color crop loading in-process; worker subprocesses can crash
 # after CUDA models have already been initialized in each torchrun rank.
@@ -85,6 +95,15 @@ echo "MIXED_PRECISION=${MIXED_PRECISION}"
 echo "NUM_INFERENCE_STEPS=${NUM_INFERENCE_STEPS}"
 echo "RESOLUTION=${RESOLUTION}"
 echo "GENEVAL_COLOR_NUM_WORKERS=${GENEVAL_COLOR_NUM_WORKERS}"
+echo
+
+if [[ "${BASE_MODE:-0}" == "1" ]]; then
+  LORA_HF_PATH=""
+  GUIDANCE_SCALE="4.5"
+  echo "BASE_MODE=1: launching base SD3.5 with empty LORA_HF_PATH and GUIDANCE_SCALE=4.5."
+fi
+echo "Effective LORA_HF_PATH=${LORA_HF_PATH:-<base model>}"
+echo "Effective GUIDANCE_SCALE=${GUIDANCE_SCALE}"
 echo
 
 "${MAIN_VENV}/bin/torchrun" --nproc_per_node="${NPROC_PER_NODE}" \

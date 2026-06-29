@@ -101,6 +101,7 @@ def load_geneval(DEVICE):
             return (transform(image), 0)
 
     def color_classification(image, bboxes, classname):
+        """Classify detected object crops by color using the loaded CLIP scorer."""
         if classname not in COLOR_CLASSIFIERS:
             COLOR_CLASSIFIERS[classname] = zsc.zero_shot_classifier(
                 clip_model,
@@ -114,7 +115,9 @@ def load_geneval(DEVICE):
                 str(DEVICE),
             )
         clf = COLOR_CLASSIFIERS[classname]
-        dataloader = torch.utils.data.DataLoader(ImageCrops(image, bboxes), batch_size=16, num_workers=4)
+        # Let launch scripts force single-process loading when CUDA-backed CLIP scoring is active.
+        num_workers = int(os.environ.get("GENEVAL_COLOR_NUM_WORKERS", "4"))
+        dataloader = torch.utils.data.DataLoader(ImageCrops(image, bboxes), batch_size=16, num_workers=num_workers)
         with torch.no_grad():
             pred, _ = zsc.run_classification(clip_model, clf, dataloader, str(DEVICE))
             return [COLORS[index.item()] for index in pred.argmax(1)]
